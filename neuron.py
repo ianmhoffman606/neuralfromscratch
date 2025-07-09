@@ -3,7 +3,7 @@ import numpy as np
 class Neuron:
 
     def __init__(self, input_size):
-        self.weights = np.random.rand(input_size) # initialize weights randomly
+        self.weights = np.random.randn(input_size) * 0.01  # initialize weights randomly
         self.bias = 0.0 # initialize bias to zero
 
         self.last_inputs = None # store last inputs for backpropagation

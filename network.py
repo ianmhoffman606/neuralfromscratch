@@ -42,8 +42,8 @@ class Network:
     # perform a backward pass (backpropagation) to update weights and biases
     def back_pass(self, initial_input: np.ndarray, target_output: np.ndarray, learning_rate: float):
         # Ensure inputs are at least 1-dimensional
-        initial_input = np.atleast_1d(initial_input)
-        target_output = np.atleast_1d(target_output)
+        initial_input = np.array(initial_input)
+        target_output = np.array(target_output)
 
         # perform a forward pass to get the predicted output
         predicted_output_array = self.forward_pass(initial_input)
