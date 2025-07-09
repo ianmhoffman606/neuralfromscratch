@@ -7,8 +7,8 @@ from network import Network
 net = Network(input_size=1, hidden_layers_count=3, neurons_per_hidden_layer=50, output_size=1)
 
 # set the number of training epochs
-epochs = 80000
-learning_rate = 0.0005 # define learning rate
+epochs = 800000
+learning_rate = 0.001 # define learning rate
 
 # train the network using backpropagation
 for _ in range(epochs): # iterate over epochs
@@ -20,7 +20,7 @@ for _ in range(epochs): # iterate over epochs
     predicted_output = net.forward_pass(input_data)
 
     # Step 2: Perform a backward pass using the prediction to update the weights
-    net.back_pass(predicted_output, target_data, learning_rate)
+    net.back_pass(predicted_output, target_data, learning_rate, grad_clip_threshold=1.0)
 
 def fix_sine(x):
     return [net.forward_pass(val)[0] for val in x]

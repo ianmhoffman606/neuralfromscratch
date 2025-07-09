@@ -35,12 +35,12 @@ class Network:
         return final_output
 
     # calculate the derivative of the mean squared error loss
-    def calculate_mse_loss_derivative(self, predicted_output: np.ndarray, target_output: np.ndarray) -> np.ndarray:
+    def calculate_mse_loss_derivative(self, predicted_output: np.ndarray, target_output: np.ndarray, ) -> np.ndarray:
 
         return 2 * (predicted_output - target_output) / len(predicted_output)
 
     # perform a backward pass (backpropagation) to update weights and biases
-    def back_pass(self, predicted_output: np.ndarray, target_output: np.ndarray, learning_rate: float):
+    def back_pass(self, predicted_output: np.ndarray, target_output: np.ndarray, learning_rate: float, grad_clip_threshold: float = 1.0):
         # Ensure target_output is at least 1-dimensional
         target_output = np.atleast_1d(target_output)
 
@@ -71,6 +71,7 @@ class Network:
                 deltas.append(delta)
             
             deltas = np.array(deltas)
+            np.clip(deltas, -grad_clip_threshold, grad_clip_threshold, out=deltas)
 
             # Calculate the error for the previous layer using the transposed original weights
             if i > 0:
