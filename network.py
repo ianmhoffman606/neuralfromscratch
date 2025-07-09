@@ -66,21 +66,24 @@ class Network:
             current_layer = all_layers[i]
             prev_layer_output = layer_outputs[i]
 
-            # calculate the delta for the current layer
+            # Store the original weights before updating them
+            original_weights = np.array([neuron.weights for neuron in current_layer.neurons])
+
             deltas = []
             for j, neuron in enumerate(current_layer.neurons):
                 neuron_error = error[j]
                 derivative = neuron.activation_function_derivative(neuron.last_raw_output)
                 delta = neuron_error * derivative
                 deltas.append(delta)
-                
-                # update weights and bias
-                neuron.weights -= learning_rate * delta * prev_layer_output
-                neuron.bias -= learning_rate * delta
-
+            
             deltas = np.array(deltas)
 
-            # calculate the error for the previous layer
+            # Calculate the error for the previous layer using the original weights
             if i > 0:
-                weights_matrix = np.array([neuron.weights for neuron in current_layer.neurons])
-                error = np.dot(deltas, weights_matrix)
+                error = np.dot(deltas, original_weights)
+
+            # Now, update the weights and biases for the current layer's neurons
+            for j, neuron in enumerate(current_layer.neurons):
+                delta = deltas[j]
+                neuron.weights -= learning_rate * delta * prev_layer_output
+                neuron.bias -= learning_rate * delta
