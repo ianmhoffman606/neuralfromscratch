@@ -10,16 +10,16 @@ class Network:
         self.neurons_per_hidden_layer = neurons_per_hidden_layer
         self.output_size = output_size
 
-        # initialize input layer
-        self.input_layer = Layer(input_size, neurons_per_hidden_layer)
+        # initialize input layer with Leaky ReLU
+        self.input_layer = Layer(input_size, neurons_per_hidden_layer, activation_type='leaky_relu')
 
-        # initialize hidden layers
+        # initialize hidden layers with Leaky ReLU
         self.hidden_layers = []
         for _ in range(hidden_layers_count):
-            self.hidden_layers.append(Layer(neurons_per_hidden_layer, neurons_per_hidden_layer))
+            self.hidden_layers.append(Layer(neurons_per_hidden_layer, neurons_per_hidden_layer, activation_type='leaky_relu'))
 
-        # initialize output layer
-        self.output_layer = Layer(neurons_per_hidden_layer, output_size)
+        # initialize output layer with tanh
+        self.output_layer = Layer(neurons_per_hidden_layer, output_size, activation_type='tanh')
 
     # perform a forward pass through the network
     def forward_pass(self, initial_input: np.ndarray) -> np.ndarray:
@@ -33,7 +33,7 @@ class Network:
 
         final_output = self.output_layer.layer_output(current_output)
         return final_output
-    
+
     # calculate the derivative of the mean squared error loss
     def calculate_mse_loss_derivative(self, predicted_output: np.ndarray, target_output: np.ndarray) -> np.ndarray:
 
@@ -50,7 +50,7 @@ class Network:
 
         # calculate the initial error signal (derivative of loss with respect to output)
         error_signal = self.calculate_mse_loss_derivative(predicted_output_array, target_output)
-        
+
         # backpropagate through the output layer
         deltas_raw_output_output_layer = []
         for i, neuron in enumerate(self.output_layer.neurons):
@@ -72,13 +72,13 @@ class Network:
         error_signal = new_error_signal_for_prev_layer
 
         # backpropagate through hidden layers in reverse order
-        for layer_index in reversed(range(self.hidden_layers_count)): 
-            current_layer = self.hidden_layers[layer_index] 
+        for layer_index in reversed(range(self.hidden_layers_count)):
+            current_layer = self.hidden_layers[layer_index]
 
             deltas_raw_output_hidden_layer = []
             for i, neuron in enumerate(current_layer.neurons):
 
-                neuron_output_error = error_signal[i] 
+                neuron_output_error = error_signal[i]
 
                 # calculate delta for each neuron
                 delta = neuron_output_error * neuron.activation_function_derivative(neuron.last_raw_output)
@@ -87,7 +87,7 @@ class Network:
                 # update weights and bias
                 neuron.weights -= learning_rate * delta * neuron.last_inputs
                 neuron.bias -= learning_rate * delta
-            
+
             # calculate error signal for the next previous layer (if not the input layer)
             if layer_index > 0:
 
@@ -97,7 +97,7 @@ class Network:
 
                     new_error_signal_for_prev_layer += deltas_raw_output_hidden_layer[i] * neuron.weights
 
-                error_signal = new_error_signal_for_prev_layer 
+                error_signal = new_error_signal_for_prev_layer
 
         # backpropagate through the input layer
         deltas_raw_output_input_layer = []

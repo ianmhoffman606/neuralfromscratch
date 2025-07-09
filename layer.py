@@ -4,13 +4,13 @@ from neuron import Neuron
 
 class Layer:
 
-    def __init__(self, input_size: int, output_size: int):
+    def __init__(self, input_size: int, output_size: int, activation_type: str = 'tanh'):
         self.input_size = input_size
         self.output_size = output_size
         self.neurons = []
-        # initialize neurons for the layer
+        # initialize neurons for the layer with specified activation type
         for _ in range(output_size):
-            self.neurons.append(Neuron(input_size))
+            self.neurons.append(Neuron(input_size, activation_type)) # Pass activation_type
 
         # store last inputs and outputs for backpropagation
         self.last_inputs = None
@@ -22,10 +22,10 @@ class Layer:
 
         outputs: list[float] = []
         # calculate output for each neuron in the layer
-        for neuron in self.neurons: 
+        for neuron in self.neurons:
             outputs.append(neuron.neuron_output(inputs))
 
         # store outputs for backpropagation
         self.last_outputs = outputs
-        
+
         return np.array(outputs)
