@@ -1,19 +1,11 @@
 import numpy as np
-from layer import Layer
+
+from network import Network
+
+net = Network(1, 2, 25, 1)
 
 input = np.array(0.0)
-hiddens = 2
-neuron_per_hidden = 25
 
-input_layer = Layer(1, neuron_per_hidden)
+output = net.forward_pass(input)
 
-hidden_layers = []
-for _ in range(hiddens - 1):
-    hidden_layers.append(Layer(neuron_per_hidden, neuron_per_hidden))
-
-for layer in hidden_layers:
-    input = layer.layer_output(input)
-
-output_layer = Layer(neuron_per_hidden, 1)
-
-print(output_layer.layer_output(input))
+print(output)
