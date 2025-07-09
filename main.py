@@ -20,7 +20,7 @@ for _ in range(epochs): # iterate over epochs
     predicted_output = net.forward_pass(input_data)
 
     # Step 2: Perform a backward pass using the prediction to update the weights
-    net.back_pass(predicted_output, target_data, learning_rate, grad_clip_threshold=1.0)
+    net.back_pass(predicted_output, target_data, learning_rate)
 
 def fix_sine(x):
     return [net.forward_pass(val)[0] for val in x]

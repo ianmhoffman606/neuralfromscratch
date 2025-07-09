@@ -40,45 +40,40 @@ class Network:
         return 2 * (predicted_output - target_output) / len(predicted_output)
 
     # perform a backward pass (backpropagation) to update weights and biases
-    def back_pass(self, predicted_output: np.ndarray, target_output: np.ndarray, learning_rate: float, grad_clip_threshold: float = 1.0):
-        # Ensure target_output is at least 1-dimensional
+    def back_pass(self, predicted_output: np.ndarray, target_output: np.ndarray, learning_rate: float):
         target_output = np.atleast_1d(target_output)
-
-        # --- backward pass ---
-        # Start with the error at the output.
-        # `predicted_output` is the result from the forward_pass call in the main loop.
         error = self.calculate_mse_loss_derivative(predicted_output, target_output)
 
         all_layers = [self.input_layer] + self.hidden_layers + [self.output_layer]
 
-        # Propagate the error backward through the layers
         for i in reversed(range(len(all_layers))):
             current_layer = all_layers[i]
-            
-            # The input to the current layer was stored during the forward pass
-            prev_layer_output = current_layer.last_inputs
 
-            # Store the original weights before updating them
-            original_weights = np.array([neuron.weights for neuron in current_layer.neurons])
+            # Vectorized delta calculation
+            if current_layer.last_raw_output is None:
+                raise ValueError("last_raw_output is None. Ensure forward_pass is called before back_pass.")
+            deltas = error * current_layer.activation_function_derivative(current_layer.last_raw_output)
 
-            deltas = []
-            for j, neuron in enumerate(current_layer.neurons):
-                neuron_error = error[j]
-                
-                # The neuron's state (last_raw_output) is now correctly set from the forward_pass
-                derivative = neuron.activation_function_derivative(neuron.last_raw_output)
-                delta = neuron_error * derivative
-                deltas.append(delta)
-            
-            deltas = np.array(deltas)
-            np.clip(deltas, -grad_clip_threshold, grad_clip_threshold, out=deltas)
+            # Apply gradient clipping
+            np.clip(deltas, -1.0, 1.0, out=deltas)
 
-            # Calculate the error for the previous layer using the transposed original weights
-            if i > 0:
-                error = np.dot(original_weights.T, deltas)
+            # Get the output of the previous layer (or the initial input)
+            if i == 0:
+                prev_layer_output = current_layer.last_inputs
+            else:
+                raw_output = all_layers[i-1].last_raw_output
+                if raw_output is None:
+                    raise ValueError("last_raw_output is None. Cannot pass None to activation_function.")
+                prev_layer_output = all_layers[i-1].activation_function(raw_output)
 
-            # Now, update the weights and biases for the current layer's neurons
-            for j, neuron in enumerate(current_layer.neurons):
-                delta = deltas[j]
-                neuron.weights -= learning_rate * delta * prev_layer_output
-                neuron.bias -= learning_rate * delta
+            if prev_layer_output is None:
+                raise ValueError("prev_layer_output is None. Ensure forward_pass is called before back_pass.")
+
+            # Calculate error for the previous layer
+            # This must be done *before* updating the current layer's weights
+            error = np.dot(current_layer.weights.T, deltas)
+
+            # Vectorized weight and bias updates
+            # Use np.outer to update the weight matrix
+            current_layer.weights -= learning_rate * np.outer(deltas, prev_layer_output)
+            current_layer.biases -= learning_rate * deltas

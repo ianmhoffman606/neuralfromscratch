@@ -1,34 +1,52 @@
 import numpy as np
 
-from neuron import Neuron
-
 class Layer:
-
     def __init__(self, input_size: int, output_size: int, activation_type: str = 'tanh'):
-        self.input_size = input_size
+        # Instead of a list of neurons, store weights as a matrix and biases as a vector.
+        self.weights = np.random.randn(output_size, input_size) * np.sqrt(2.0 / input_size)
+        self.biases = np.zeros(output_size)
         self.output_size = output_size
-        self.neurons = []
-        # initialize neurons for the layer with specified activation type
-        for _ in range(output_size):
-            self.neurons.append(Neuron(input_size, activation_type)) # Pass activation_type
 
-        # store last inputs and outputs for backpropagation
+        # Store last inputs and outputs for backpropagation
         self.last_inputs = None
-        self.last_outputs = None
+        self.last_raw_output = None # To store the output before activation
 
+        # Set activation functions
+        if activation_type == 'leaky_relu':
+            self.activation_function = self.leaky_relu
+            self.activation_function_derivative = self.leaky_relu_derivative
+        elif activation_type == 'tanh':
+            self.activation_function = self.tanh
+            self.activation_function_derivative = self.tanh_derivative
+        elif activation_type == 'linear':
+            self.activation_function = self.linear
+            self.activation_function_derivative = self.linear_derivative
+        
     def layer_output(self, inputs: np.ndarray) -> np.ndarray:
-        self.last_inputs = np.array(inputs)
+        self.last_inputs = inputs
 
-        weights_matrix = np.array([neuron.weights for neuron in self.neurons])
-        biases_vector = np.array([neuron.bias for neuron in self.neurons])
+        # Perform the entire layer calculation with one matrix operation
+        raw_outputs = np.dot(self.weights, inputs) + self.biases
+        self.last_raw_output = raw_outputs # Store for backpropagation
 
-        raw_outputs = np.dot(weights_matrix, inputs) + biases_vector
+        # Apply the activation function to the entire vector at once
+        return self.activation_function(raw_outputs)
 
-        # --- FIX: Store the raw output in each neuron for backpropagation ---
-        for i, neuron in enumerate(self.neurons):
-            neuron.last_raw_output = raw_outputs[i]
-        # --------------------------------------------------------------------
+    # --- Add activation functions directly to the Layer class ---
+    def tanh(self, x: np.ndarray) -> np.ndarray:
+        return np.tanh(x)
 
-        self.last_outputs = [self.neurons[i].activation_function(raw_outputs[i]) for i in range(self.output_size)]
+    def tanh_derivative(self, x: np.ndarray) -> np.ndarray:
+        return 1 - np.tanh(x)**2
 
-        return np.array(self.last_outputs)
+    def leaky_relu(self, x: np.ndarray, alpha: float = 0.01) -> np.ndarray:
+        return np.maximum(alpha * x, x)
+
+    def leaky_relu_derivative(self, x: np.ndarray, alpha: float = 0.01) -> np.ndarray:
+        return np.where(x > 0, 1.0, alpha)
+
+    def linear(self, x: np.ndarray) -> np.ndarray:
+        return x
+
+    def linear_derivative(self, x: np.ndarray) -> np.ndarray:
+        return np.ones_like(x)
