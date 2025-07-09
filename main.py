@@ -8,14 +8,19 @@ net = Network(input_size=1, hidden_layers_count=3, neurons_per_hidden_layer=50, 
 
 # set the number of training epochs
 epochs = 80000
-learning_rate = 0.0008 # define learning rate
+learning_rate = 0.0005 # define learning rate
 
 # train the network using backpropagation
 for _ in range(epochs): # iterate over epochs
-    input = (np.random.rand() *  6.0 * np.pi) - (3.0 * np.pi) # generate random input
-    input_data = np.array(input)
-    net.back_pass(input_data, np.array([np.sin(input)]), learning_rate) # perform backpropagation
+    input_val = (np.random.rand() * 6.0 * np.pi) - (3.0 * np.pi) # generate random input
+    input_data = np.array(input_val)
+    target_data = np.array([np.sin(input_val)])
 
+    # Step 1: Perform a forward pass to get the prediction and set the internal state of all neurons
+    predicted_output = net.forward_pass(input_data)
+
+    # Step 2: Perform a backward pass using the prediction to update the weights
+    net.back_pass(predicted_output, target_data, learning_rate)
 
 def fix_sine(x):
     return [net.forward_pass(val)[0] for val in x]

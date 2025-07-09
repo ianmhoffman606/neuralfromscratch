@@ -17,15 +17,18 @@ class Layer:
         self.last_outputs = None
 
     def layer_output(self, inputs: np.ndarray) -> np.ndarray:
-        # store inputs for backpropagation
         self.last_inputs = np.array(inputs)
 
-        outputs: list[float] = []
-        # calculate output for each neuron in the layer
-        for neuron in self.neurons:
-            outputs.append(neuron.neuron_output(inputs))
+        weights_matrix = np.array([neuron.weights for neuron in self.neurons])
+        biases_vector = np.array([neuron.bias for neuron in self.neurons])
 
-        # store outputs for backpropagation
-        self.last_outputs = outputs
+        raw_outputs = np.dot(weights_matrix, inputs) + biases_vector
 
-        return np.array(outputs)
+        # --- FIX: Store the raw output in each neuron for backpropagation ---
+        for i, neuron in enumerate(self.neurons):
+            neuron.last_raw_output = raw_outputs[i]
+        # --------------------------------------------------------------------
+
+        self.last_outputs = [self.neurons[i].activation_function(raw_outputs[i]) for i in range(self.output_size)]
+
+        return np.array(self.last_outputs)

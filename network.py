@@ -40,31 +40,23 @@ class Network:
         return 2 * (predicted_output - target_output) / len(predicted_output)
 
     # perform a backward pass (backpropagation) to update weights and biases
-    def back_pass(self, initial_input: np.ndarray, target_output: np.ndarray, learning_rate: float):
-        # ensure inputs are at least 1-dimensional
-        initial_input = np.atleast_1d(initial_input)
+    def back_pass(self, predicted_output: np.ndarray, target_output: np.ndarray, learning_rate: float):
+        # Ensure target_output is at least 1-dimensional
         target_output = np.atleast_1d(target_output)
 
-        # --- forward pass to get outputs of all layers ---
-        layer_outputs = [initial_input]
-        current_output = initial_input
-        all_layers = [self.input_layer] + self.hidden_layers + [self.output_layer]
-
-        # calculate and store outputs for each layer
-        for layer in all_layers:
-            current_output = layer.layer_output(current_output)
-            layer_outputs.append(current_output)
-
-        predicted_output = layer_outputs[-1]
-
         # --- backward pass ---
-        # Start with the error at the output
+        # Start with the error at the output.
+        # `predicted_output` is the result from the forward_pass call in the main loop.
         error = self.calculate_mse_loss_derivative(predicted_output, target_output)
+
+        all_layers = [self.input_layer] + self.hidden_layers + [self.output_layer]
 
         # Propagate the error backward through the layers
         for i in reversed(range(len(all_layers))):
             current_layer = all_layers[i]
-            prev_layer_output = layer_outputs[i]
+            
+            # The input to the current layer was stored during the forward pass
+            prev_layer_output = current_layer.last_inputs
 
             # Store the original weights before updating them
             original_weights = np.array([neuron.weights for neuron in current_layer.neurons])
@@ -72,15 +64,17 @@ class Network:
             deltas = []
             for j, neuron in enumerate(current_layer.neurons):
                 neuron_error = error[j]
+                
+                # The neuron's state (last_raw_output) is now correctly set from the forward_pass
                 derivative = neuron.activation_function_derivative(neuron.last_raw_output)
                 delta = neuron_error * derivative
                 deltas.append(delta)
             
             deltas = np.array(deltas)
 
-            # Calculate the error for the previous layer using the original weights
+            # Calculate the error for the previous layer using the transposed original weights
             if i > 0:
-                error = np.dot(deltas, original_weights)
+                error = np.dot(original_weights.T, deltas)
 
             # Now, update the weights and biases for the current layer's neurons
             for j, neuron in enumerate(current_layer.neurons):
