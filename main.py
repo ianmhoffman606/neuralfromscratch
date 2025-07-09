@@ -6,8 +6,8 @@ from network import Network
 net = Network(input_size=1, hidden_layers_count=2, neurons_per_hidden_layer=25, output_size=1)
 
 # set the number of training epochs
-epochs = 10000
-learning_rate = 0.01 # define learning rate
+epochs = 200000
+learning_rate = 0.0001 # define learning rate
 
 # train the network using backpropagation
 for _ in range(epochs): # iterate over epochs
